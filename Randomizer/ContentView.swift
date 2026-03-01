@@ -100,19 +100,28 @@ struct ContentView: View {
             .background(Color.black)
             .navigationTitle("Рандомайзер")
             .safeAreaInset(edge: .bottom) {
-                Button("Распределить по командам") {
-                    randomizeTeams()
+                VStack(spacing: 20) {
+                    Button("Распределить по командам") {
+                        randomizeTeams()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.white, in: RoundedRectangle(cornerRadius: 14))
+                    .foregroundStyle(.black)
+                    .font(.headline)
+                    .disabled(participants.isEmpty)
+                    .opacity(participants.isEmpty ? 0.5 : 1)
+
+                    Button("Сбросить") {
+                        resetToInitialState()
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.red)
+                    .font(.headline)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 14))
-                .foregroundStyle(.black)
-                .font(.headline)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(.ultraThinMaterial)
-                .disabled(participants.isEmpty)
-                .opacity(participants.isEmpty ? 0.5 : 1)
             }
             .alert("Добавить участника", isPresented: $showingAddParticipantAlert) {
                 TextField("Имя", text: $newParticipantName)
@@ -206,6 +215,17 @@ struct ContentView: View {
         participants = Array(state.participants.prefix(participantLimit))
         teams = state.teams
         extraParticipants = state.extraParticipants
+    }
+
+    private func resetToInitialState() {
+        teamCount = 2
+        participantLimit = 4
+        participants = []
+        teams = []
+        extraParticipants = []
+        newParticipantName = ""
+        showingAddParticipantAlert = false
+        UserDefaults.standard.removeObject(forKey: Self.stateCacheKey)
     }
 }
 
