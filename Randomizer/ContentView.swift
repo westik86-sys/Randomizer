@@ -8,6 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
+    private struct CachedState: Codable {
+        let teamCount: Int
+        let participantLimit: Int
+        let participants: [String]
+        let teams: [[String]]
+        let extraParticipants: [String]
+    }
+
+    private static let stateCacheKey = "randomizer.cachedState.v1"
+
     @State private var teamCount: Int = 2
     @State private var participantLimit: Int = 4
     @State private var participants: [String] = []
@@ -15,6 +25,7 @@ struct ContentView: View {
     @State private var extraParticipants: [String] = []
     @State private var showingAddParticipantAlert: Bool = false
     @State private var newParticipantName: String = ""
+    @State private var didRestoreCachedState: Bool = false
 
     private var canAddParticipant: Bool {
         participants.count < participantLimit
@@ -32,6 +43,7 @@ struct ContentView: View {
                         .onChange(of: teamCount) { _, _ in
                             teams = []
                             extraParticipants = []
+                            cacheState()
                         }
                     Stepper("Участников: \(participantLimit)", value: $participantLimit, in: 1...200)
                         .onChange(of: participantLimit) { _, _ in
@@ -114,6 +126,9 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onAppear {
+            restoreCachedStateIfNeeded()
+        }
     }
 
     private func randomizeTeams() {
@@ -132,6 +147,8 @@ struct ContentView: View {
                 index += 1
             }
         }
+
+        cacheState()
     }
 
     private func addParticipant() {
@@ -143,12 +160,14 @@ struct ContentView: View {
         newParticipantName = ""
         teams = []
         extraParticipants = []
+        cacheState()
     }
 
     private func removeParticipants(at offsets: IndexSet) {
         participants.remove(atOffsets: offsets)
         teams = []
         extraParticipants = []
+        cacheState()
     }
 
     private func resetIfNeeded() {
@@ -157,6 +176,36 @@ struct ContentView: View {
         }
         teams = []
         extraParticipants = []
+        cacheState()
+    }
+
+    private func cacheState() {
+        let state = CachedState(
+            teamCount: teamCount,
+            participantLimit: participantLimit,
+            participants: participants,
+            teams: teams,
+            extraParticipants: extraParticipants
+        )
+
+        guard let data = try? JSONEncoder().encode(state) else { return }
+        UserDefaults.standard.set(data, forKey: Self.stateCacheKey)
+    }
+
+    private func restoreCachedStateIfNeeded() {
+        guard !didRestoreCachedState else { return }
+        didRestoreCachedState = true
+
+        guard let data = UserDefaults.standard.data(forKey: Self.stateCacheKey),
+              let state = try? JSONDecoder().decode(CachedState.self, from: data) else {
+            return
+        }
+
+        teamCount = min(max(state.teamCount, 1), 20)
+        participantLimit = min(max(state.participantLimit, 1), 200)
+        participants = Array(state.participants.prefix(participantLimit))
+        teams = state.teams
+        extraParticipants = state.extraParticipants
     }
 }
 
