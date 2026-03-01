@@ -38,6 +38,10 @@ struct ContentView: View {
         newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private var isParticipantNameValid: Bool {
+        trimmedNewName.count >= 1
+    }
+
     private var isDefaultState: Bool {
         teamCount == Self.defaultTeamCount &&
         participantLimit == Self.defaultParticipantLimit &&
@@ -68,10 +72,7 @@ struct ContentView: View {
                     }
                     .disabled(!canAddParticipant)
 
-                    if participants.isEmpty {
-                        Text("Участники пока не добавлены")
-                            .foregroundStyle(.secondary)
-                    } else {
+                    if !participants.isEmpty {
                         ForEach(Array(participants.enumerated()), id: \.offset) { index, name in
                             Text("\(index + 1). \(name)")
                         }
@@ -112,7 +113,7 @@ struct ContentView: View {
             .navigationTitle("Рандомайзер")
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 20) {
-                    Button("Распределить по командам") {
+                    Button("Распределить") {
                         randomizeTeams()
                     }
                     .frame(maxWidth: .infinity)
@@ -123,7 +124,7 @@ struct ContentView: View {
                     .disabled(participants.isEmpty)
                     .opacity(participants.isEmpty ? 0.5 : 1)
 
-                    if !isDefaultState {
+                    if !participants.isEmpty {
                         Button("Сбросить") {
                             resetToInitialState()
                         }
@@ -141,10 +142,10 @@ struct ContentView: View {
                 Button("Добавить") {
                     addParticipant()
                 }
-                .disabled(trimmedNewName.isEmpty || !canAddParticipant || participants.contains(trimmedNewName))
+                .disabled(!isParticipantNameValid || !canAddParticipant || participants.contains(trimmedNewName))
                 Button("Отмена", role: .cancel) {}
             } message: {
-                Text("Введите имя участника")
+                Text("Введите минимум 1 символ")
             }
         }
         .preferredColorScheme(.dark)
@@ -175,7 +176,7 @@ struct ContentView: View {
 
     private func addParticipant() {
         let name = trimmedNewName
-        guard !name.isEmpty else { return }
+        guard isParticipantNameValid else { return }
         guard !participants.contains(name) else { return }
         guard canAddParticipant else { return }
         participants.append(name)
