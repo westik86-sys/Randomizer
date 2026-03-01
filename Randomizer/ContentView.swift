@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct ContentView: View {
+    private static let defaultTeamCount = 2
+    private static let defaultParticipantLimit = 4
+
     private struct CachedState: Codable {
         let teamCount: Int
         let participantLimit: Int
@@ -33,6 +36,14 @@ struct ContentView: View {
 
     private var trimmedNewName: String {
         newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isDefaultState: Bool {
+        teamCount == Self.defaultTeamCount &&
+        participantLimit == Self.defaultParticipantLimit &&
+        participants.isEmpty &&
+        teams.isEmpty &&
+        extraParticipants.isEmpty
     }
 
     var body: some View {
@@ -112,12 +123,14 @@ struct ContentView: View {
                     .disabled(participants.isEmpty)
                     .opacity(participants.isEmpty ? 0.5 : 1)
 
-                    Button("Сбросить") {
-                        resetToInitialState()
+                    if !isDefaultState {
+                        Button("Сбросить") {
+                            resetToInitialState()
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.red)
+                        .font(.headline)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red)
-                    .font(.headline)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -218,8 +231,8 @@ struct ContentView: View {
     }
 
     private func resetToInitialState() {
-        teamCount = 2
-        participantLimit = 4
+        teamCount = Self.defaultTeamCount
+        participantLimit = Self.defaultParticipantLimit
         participants = []
         teams = []
         extraParticipants = []
