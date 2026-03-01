@@ -27,26 +27,26 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Settings") {
-                    Stepper("Teams: \(teamCount)", value: $teamCount, in: 1...20)
+                Section("Настройки") {
+                    Stepper("Команд: \(teamCount)", value: $teamCount, in: 1...20)
                         .onChange(of: teamCount) { _, _ in
                             teams = []
                             extraParticipants = []
                         }
-                    Stepper("Participants: \(participantLimit)", value: $participantLimit, in: 1...200)
+                    Stepper("Участников: \(participantLimit)", value: $participantLimit, in: 1...200)
                         .onChange(of: participantLimit) { _, _ in
                             resetIfNeeded()
                         }
                 }
 
-                Section("Participants List") {
-                    Button("Add Participant") {
+                Section("Список участников") {
+                    Button("Добавить участника") {
                         showingAddParticipantAlert = true
                     }
                     .disabled(!canAddParticipant)
 
                     if participants.isEmpty {
-                        Text("No participants yet")
+                        Text("Участники пока не добавлены")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(Array(participants.enumerated()), id: \.offset) { index, name in
@@ -56,21 +56,14 @@ struct ContentView: View {
                     }
                 }
 
-                Section {
-                    Button("Randomize Teams") {
-                        randomizeTeams()
-                    }
-                    .disabled(participants.isEmpty)
-                }
-
                 if !teams.isEmpty {
-                    Section("Result") {
+                    Section("Результат") {
                         ForEach(Array(teams.enumerated()), id: \.offset) { index, team in
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("Team \(index + 1)")
+                                Text("Команда \(index + 1)")
                                     .font(.headline)
                                 if team.isEmpty {
-                                    Text("No participants")
+                                    Text("Нет участников")
                                         .foregroundStyle(.secondary)
                                 } else {
                                     ForEach(team, id: \.self) { person in
@@ -84,7 +77,7 @@ struct ContentView: View {
                 }
 
                 if !extraParticipants.isEmpty {
-                    Section("Unassigned") {
+                    Section("Не распределены") {
                         ForEach(extraParticipants, id: \.self) { person in
                             Text(person)
                         }
@@ -93,16 +86,31 @@ struct ContentView: View {
             }
             .scrollContentBackground(.hidden)
             .background(Color.black)
-            .navigationTitle("Team Randomizer")
-            .alert("Add Participant", isPresented: $showingAddParticipantAlert) {
-                TextField("Name", text: $newParticipantName)
-                Button("Add") {
+            .navigationTitle("Рандомайзер")
+            .safeAreaInset(edge: .bottom) {
+                Button("Распределить по командам") {
+                    randomizeTeams()
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.white, in: RoundedRectangle(cornerRadius: 14))
+                .foregroundStyle(.black)
+                .font(.headline)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial)
+                .disabled(participants.isEmpty)
+                .opacity(participants.isEmpty ? 0.5 : 1)
+            }
+            .alert("Добавить участника", isPresented: $showingAddParticipantAlert) {
+                TextField("Имя", text: $newParticipantName)
+                Button("Добавить") {
                     addParticipant()
                 }
                 .disabled(trimmedNewName.isEmpty || !canAddParticipant || participants.contains(trimmedNewName))
-                Button("Cancel", role: .cancel) {}
+                Button("Отмена", role: .cancel) {}
             } message: {
-                Text("Enter participant name")
+                Text("Введите имя участника")
             }
         }
         .preferredColorScheme(.dark)
